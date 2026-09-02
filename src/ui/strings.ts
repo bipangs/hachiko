@@ -118,6 +118,7 @@ export const strings = {
     optionPhone: 'Pegang HP',
     optionMixed: 'Campuran',
     optionSkip: 'Lewati',
+    autoSkipNote: (seconds: number) => `Kalau didiamkan, ini otomatis lewat dalam ${seconds} detik.`,
   },
 
   sessionCard: {
@@ -137,6 +138,7 @@ export const strings = {
     milestoneSessionCount: (n: number) =>
       n === 1 ? 'Sesi pertamamu bareng Hachiko selesai!' : `Sudah ${n} sesi kamu bareng Hachiko!`,
     milestoneStreak: (days: number) => `Wah, ${days} hari berturut-turut!`,
+    autoCloseNote: (seconds: number) => `Kalau didiamkan, ini otomatis lanjut dalam ${seconds} detik.`,
   },
 } as const
 

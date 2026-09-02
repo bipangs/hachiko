@@ -5,6 +5,11 @@ import { downloadJsonl } from '../../storage/telemetry'
 import { mascotPeek } from '../hachiko'
 import type { Milestone } from '../../storage/companion'
 
+// Retunable if the pace feels wrong in practice - not a structural
+// constant. Longer than Clarify's since there's more to read here
+// (metrics, observation, a possible milestone).
+const AUTO_CLOSE_MS = 20_000
+
 /**
  * One plain observation, never a judgment (PRD §8, BUILD_PROMPTS P4).
  * "Fokusmu paling kuat di 12 menit pertama." is right.
@@ -82,14 +87,24 @@ export function renderSessionCard(
       cardChildren.push(el('p', { class: 'threshold-note' }, [s.uncertainThresholdNote]))
     }
 
+    let settled = false
+    let remainingMs = AUTO_CLOSE_MS
+    const autoNote = el('p', { class: 'note' }, [s.autoCloseNote(Math.ceil(remainingMs / 1000))])
+
+    const finish = () => {
+      if (settled) return
+      settled = true
+      window.clearInterval(interval)
+      root.replaceChildren()
+      resolve()
+    }
+
     const downloadBtn = button(s.downloadLabel, () => {
+      remainingMs = AUTO_CLOSE_MS
       downloadJsonl(`hachiko-${record.id}.jsonl`, telemetryJsonl)
     }, { variant: 'secondary' })
 
-    const doneBtn = button(s.doneLabel, () => {
-      root.replaceChildren()
-      resolve()
-    })
+    const doneBtn = button(s.doneLabel, finish)
 
     const celebration: (Node | string)[] = milestone ? [celebrationBlock(milestone)] : []
 
@@ -99,8 +114,18 @@ export function renderSessionCard(
       card(...cardChildren),
       body(s.downloadNote),
       actions(downloadBtn, doneBtn),
+      autoNote,
     )
 
     root.replaceChildren(screenEl)
+
+    const interval = window.setInterval(() => {
+      remainingMs -= 1000
+      if (remainingMs <= 0) {
+        finish()
+        return
+      }
+      autoNote.textContent = s.autoCloseNote(Math.ceil(remainingMs / 1000))
+    }, 1000)
   })
 }
