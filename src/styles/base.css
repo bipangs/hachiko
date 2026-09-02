@@ -456,6 +456,26 @@ input:focus-visible,
   color: var(--cream);
 }
 
+/* A visual mirror of the countdown text above it, nothing more - fills
+   as remainingMs ticks down, no percentage label, no other metric. */
+.session__progress {
+  width: 100%;
+  max-width: 320px;
+  height: 6px;
+  align-self: center;
+  border-radius: var(--radius-pill);
+  background: var(--night-border);
+  overflow: hidden;
+}
+
+.session__progress-fill {
+  width: 0%;
+  height: 100%;
+  border-radius: var(--radius-pill);
+  background: var(--amber);
+  transition: width var(--duration-fast) linear;
+}
+
 .session__state {
   font-size: var(--text-lg);
   font-weight: 600;

@@ -61,6 +61,11 @@ function runWorkPhase(
     const { root: screenEl, content } = screen({ night: true })
 
     const timerEl = el('p', { class: 'session__timer' }, [formatTimer(WORK_MS)])
+    // A visual mirror of the same time-based countdown the timer text
+    // already shows - not a new metric, just another view of it. Never
+    // a number of its own (CLAUDE.md: no percentage during the session).
+    const progressFill = el('div', { class: 'session__progress-fill' })
+    const progressBar = el('div', { class: 'session__progress' }, [progressFill])
     const hachiko = new HachikoView()
     const stateLabel = el('p', { class: 'session__state' }, [''])
     const dot = cameraDot(strings.common.cameraActive)
@@ -87,6 +92,7 @@ function runWorkPhase(
 
     const sessionWrap = el('div', { class: 'session' }, [
       timerEl,
+      progressBar,
       hachiko.element,
       stateLabel,
       nudgeSlot,
@@ -103,6 +109,11 @@ function runWorkPhase(
     const record = newSessionRecord(declaredMedia)
 
     let remainingMs = WORK_MS
+    // Whichever duration currently governs the countdown - reassigned
+    // alongside remainingMs when an extension is accepted, so the
+    // progress bar re-baselines against the new total instead of
+    // reading as "past 100%".
+    let totalMs = WORK_MS
     let lastFrameT: number | null = null
     let sessionStartT: number | null = null
     let previousState: FocusState | null = null
@@ -139,6 +150,7 @@ function runWorkPhase(
       const accept = button(s.extension.accept, () => {
         hideNudge()
         remainingMs = EXTENSION_MS
+        totalMs = EXTENSION_MS
       })
       const decline = button(s.goToBreak, () => {
         hideNudge()
@@ -196,6 +208,7 @@ function runWorkPhase(
       const stirring = rawOutAccumMs >= STIRRING_RATIO * DEFAULT_CONFIG.toDistractedMs
 
       timerEl.textContent = formatTimer(remainingMs)
+      progressFill.style.width = `${Math.min(1, Math.max(0, 1 - remainingMs / totalMs)) * 100}%`
       stateLabel.textContent = s.stateLabels[out.state]
       hachiko.setState(out.state, stirring)
 
