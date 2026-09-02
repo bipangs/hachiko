@@ -10,7 +10,8 @@ import { FocusEngine } from '../../engine/focusEngine'
 import { DEFAULT_CONFIG } from '../../engine/config'
 import type { Cone, FocusState, Media } from '../../engine/types'
 import { TelemetryRecorder, persistRecording } from '../../storage/telemetry'
-import { emptyDurations, saveSession, type DistractionSpan, type SessionRecord } from '../../storage/sessions'
+import { emptyDurations, saveSession, listSessions, type DistractionSpan, type SessionRecord } from '../../storage/sessions'
+import { deriveCompanionState, findNewMilestone, type Milestone } from '../../storage/companion'
 import { renderClarify } from './clarify'
 import { renderSessionCard } from './sessionCard'
 
@@ -274,6 +275,11 @@ export async function runSession(
     record.clarification = { answer }
   }
 
+  const now = Date.now()
+  const before = deriveCompanionState(listSessions(), now)
   saveSession(record)
-  await renderSessionCard(root, record, telemetryJsonl)
+  const after = deriveCompanionState(listSessions(), now)
+  const milestone: Milestone | null = findNewMilestone(before, after)
+
+  await renderSessionCard(root, record, telemetryJsonl, milestone)
 }

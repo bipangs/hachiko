@@ -128,6 +128,9 @@ export const strings = {
     downloadLabel: 'Unduh data sesi',
     downloadNote: 'File ini cuma berisi angka (sudut kepala, waktu, label objek), tidak ada gambar sama sekali.',
     doneLabel: 'Selesai',
+    milestoneSessionCount: (n: number) =>
+      n === 1 ? 'Sesi pertamamu bareng Hachiko selesai!' : `Sudah ${n} sesi kamu bareng Hachiko!`,
+    milestoneStreak: (days: number) => `Wah, ${days} hari berturut-turut!`,
   },
 } as const
 

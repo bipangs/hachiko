@@ -2,6 +2,8 @@ import { strings, formatMinutes, formatMinSec } from '../strings'
 import { actions, body, button, card, el, screen, title } from '../components'
 import { computeMetrics, type SessionRecord } from '../../storage/sessions'
 import { downloadJsonl } from '../../storage/telemetry'
+import { mascotPeek } from '../hachiko'
+import type { Milestone } from '../../storage/companion'
 
 /**
  * One plain observation, never a judgment (PRD §8, BUILD_PROMPTS P4).
@@ -21,7 +23,42 @@ function metric(label: string, value: string): HTMLDivElement {
   return el('div', { class: 'metric' }, [el('span', { class: 'metric__label' }, [label]), el('span', { class: 'metric__value' }, [value])])
 }
 
-export function renderSessionCard(root: HTMLElement, record: SessionRecord, telemetryJsonl: string): Promise<void> {
+/** Only ever positive - there is no "you missed a milestone" text, because
+ * there's no such thing here, only ones you've reached. */
+function milestoneText(milestone: Milestone): string {
+  return milestone.kind === 'streak'
+    ? strings.sessionCard.milestoneStreak(milestone.value)
+    : strings.sessionCard.milestoneSessionCount(milestone.value)
+}
+
+/**
+ * The milestone moment: a soft amber halo behind Hachiko (reusing the
+ * --glow-amber token base.css already defines for exactly this kind of
+ * warmth) and a one-shot confetti burst - eight fixed pieces, no
+ * randomization or animation loop, colors drawn only from the existing
+ * palette. Both animations play once on mount and stop; nothing here
+ * loops. Shown only here, after the session ends - never during one.
+ */
+function celebrationBlock(milestone: Milestone): HTMLDivElement {
+  const confetti = el(
+    'div',
+    { class: 'celebration__confetti', 'aria-hidden': 'true' },
+    Array.from({ length: 8 }, (_, i) => el('span', { class: `confetti-piece confetti-piece--${i + 1}` })),
+  )
+  const mascotWrap = el('div', { class: 'celebration__mascot-wrap' }, [
+    el('div', { class: 'celebration__glow', 'aria-hidden': 'true' }),
+    confetti,
+    mascotPeek('celebrating'),
+  ])
+  return el('div', { class: 'celebration' }, [mascotWrap, el('p', { class: 'milestone-badge' }, [milestoneText(milestone)])])
+}
+
+export function renderSessionCard(
+  root: HTMLElement,
+  record: SessionRecord,
+  telemetryJsonl: string,
+  milestone: Milestone | null,
+): Promise<void> {
   return new Promise((resolve) => {
     const s = strings.sessionCard
     const { root: screenEl, content } = screen()
@@ -54,8 +91,11 @@ export function renderSessionCard(root: HTMLElement, record: SessionRecord, tele
       resolve()
     })
 
+    const celebration: (Node | string)[] = milestone ? [celebrationBlock(milestone)] : []
+
     content.append(
       title(s.title),
+      ...celebration,
       card(...cardChildren),
       body(s.downloadNote),
       actions(downloadBtn, doneBtn),

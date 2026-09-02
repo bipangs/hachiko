@@ -12,7 +12,7 @@ import type { FocusState } from '../engine/types'
  * same rule as everywhere else in the app.
  */
 
-export type HachikoPose = 'sleeping' | 'stirring' | 'waking' | 'waiting' | 'drowsy'
+export type HachikoPose = 'sleeping' | 'stirring' | 'waking' | 'waiting' | 'drowsy' | 'celebrating'
 
 /**
  * Five FocusState values map onto five poses. UNCERTAIN and TIDAK_HADIR
@@ -49,6 +49,7 @@ const ARIA_LABEL: Record<HachikoPose, string> = {
   waking: 'Hachiko terbangun',
   waiting: 'Hachiko menunggu dengan tenang',
   drowsy: 'Hachiko mulai mengantuk',
+  celebrating: 'Hachiko ikut senang merayakan pencapaianmu',
 }
 
 const POSE_MARKUP: Record<HachikoPose, string> = {
@@ -113,6 +114,21 @@ const POSE_MARKUP: Record<HachikoPose, string> = {
       <path d="M106 92 Q114 97 122 92" stroke="var(--ink)" stroke-width="3.5" stroke-linecap="round" fill="none" />
       <ellipse cx="100" cy="106" rx="6" ry="4" fill="var(--ink)" />
       <ellipse cx="100" cy="123" rx="7" ry="9" fill="var(--ink)" opacity="0.85" />
+    </g>
+  `,
+  celebrating: `
+    <ellipse cx="100" cy="145" rx="58" ry="42" fill="var(--amber)" />
+    <circle cx="100" cy="88" r="40" fill="var(--amber)" />
+    <path d="M70 55 L58 14 L86 46 Z" fill="var(--amber-deep)" />
+    <path d="M130 55 L142 14 L114 46 Z" fill="var(--amber-deep)" />
+    <path d="M78 90 Q86 80 94 90" stroke="var(--ink)" stroke-width="3.5" stroke-linecap="round" fill="none" />
+    <path d="M106 90 Q114 80 122 90" stroke="var(--ink)" stroke-width="3.5" stroke-linecap="round" fill="none" />
+    <ellipse cx="100" cy="104" rx="6" ry="4" fill="var(--ink)" />
+    <path d="M84 114 Q100 132 116 114 Q100 120 84 114 Z" fill="var(--ink)" />
+    <g stroke="var(--sage)" stroke-width="3" stroke-linecap="round" opacity="0.85">
+      <path d="M46 52 l9 9" />
+      <path d="M154 52 l-9 9" />
+      <path d="M100 16 v12" />
     </g>
   `,
 }
