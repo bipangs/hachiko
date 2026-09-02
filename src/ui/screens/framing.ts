@@ -3,6 +3,7 @@ import { actions, body, button, cameraDot, el, screen, title } from '../componen
 import { startCamera, startPerceptionLoop, type PerceptionLoopHandle } from '../../perception/camera'
 import { createFaceLandmarker } from '../../perception/face'
 import { createObjectDetector } from '../../perception/objects'
+import { createFaceDetector } from '../../perception/faceBox'
 import type { PerceptionBundle } from '../../perception/bundle'
 
 export interface FramingResult {
@@ -47,12 +48,22 @@ export function renderFraming(root: HTMLElement): Promise<FramingResult> {
         dot.style.visibility = 'visible'
         status.textContent = s.body
 
-        const [faceLandmarker, objectDetector] = await Promise.all([createFaceLandmarker(), createObjectDetector()])
-        bundle = { camera, faceLandmarker, objectDetector }
+        const [faceLandmarker, objectDetector, faceDetector] = await Promise.all([
+          createFaceLandmarker(),
+          createObjectDetector(),
+          createFaceDetector(),
+        ])
+        bundle = { camera, faceLandmarker, objectDetector, faceDetector }
 
+        // Slower than the default 5fps: this screen only checks
+        // faceFound to enable Continue, nothing time-sensitive, and
+        // detectForVideo runs synchronously - at the default rate its
+        // periodic blocking was visible as stutter in the live preview.
+        // Session.ts never shows the preview at all, so its own
+        // detection rate is untouched.
         loop = startPerceptionLoop(video, faceLandmarker, objectDetector, (tick) => {
           if (tick.face) continueBtn.disabled = !tick.face.faceFound
-        })
+        }, 1000)
       } catch (err) {
         status.textContent =
           err instanceof DOMException && (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError')
