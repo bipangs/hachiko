@@ -6,7 +6,9 @@ export default defineConfig({
     // src/ui/pacing.ts is also pure (no DOM) and unit-tested the same
     // way, even though it lives outside src/engine/ by design - it's
     // session-orchestration policy, not the core decision table.
-    include: ['src/engine/**/*.test.ts', 'src/ui/**/*.test.ts'],
+    // src/storage/companion.ts is pure functions (no browser APIs) consuming
+    // session data, also tested under Node.
+    include: ['src/engine/**/*.test.ts', 'src/ui/**/*.test.ts', 'src/storage/**/*.test.ts'],
     environment: 'node',
   },
 })
