@@ -65,25 +65,46 @@ export function startPerceptionLoop(
   let lastFaceT = -Infinity
   let lastObjectT = -Infinity
 
-  const onFrame: VideoFrameRequestCallback = (_now, metadata) => {
+  const onFrame: VideoFrameRequestCallback = () => {
     if (stopped) return
 
-    const timestampMs = Math.round(metadata.mediaTime * 1000)
+    // Not metadata.mediaTime: re-registering requestVideoFrameCallback on
+    // a still-live MediaStream (every screen after Framing does exactly
+    // this, reusing the same video/faceLandmarker) can reset or repeat
+    // mediaTime values, which breaks MediaPipe's requirement that
+    // timestamps fed to a shared FaceLandmarker/ObjectDetector instance
+    // always increase - a "Packet timestamp mismatch" thrown from
+    // detectForVideo, with no try/catch below, used to silently and
+    // permanently freeze whichever screen hit it first (Calibration,
+    // stuck at 15s forever). performance.now() is monotonic for the
+    // whole page lifetime regardless of how many times this loop is torn
+    // down and restarted, and everything downstream (the engine,
+    // calibration, session) only ever uses elapsed differences between
+    // consecutive timestamps, never an absolute value - so this is a
+    // drop-in replacement.
+    const timestampMs = Math.round(performance.now())
 
-    let face: FaceReading | null = null
-    if (timestampMs - lastFaceT >= faceIntervalMs) {
-      face = readFace(faceLandmarker, video, timestampMs)
-      lastFaceT = timestampMs
-    }
+    // Without this, one thrown error (from either detector) would return
+    // before reaching the requestVideoFrameCallback re-registration
+    // below, permanently and silently freezing the loop - see above.
+    try {
+      let face: FaceReading | null = null
+      if (timestampMs - lastFaceT >= faceIntervalMs) {
+        face = readFace(faceLandmarker, video, timestampMs)
+        lastFaceT = timestampMs
+      }
 
-    let objectLabels: string[] | null = null
-    if (timestampMs - lastObjectT >= objectIntervalMs) {
-      objectLabels = detectObjects(objectDetector, video, timestampMs)
-      lastObjectT = timestampMs
-    }
+      let objectLabels: string[] | null = null
+      if (timestampMs - lastObjectT >= objectIntervalMs) {
+        objectLabels = detectObjects(objectDetector, video, timestampMs)
+        lastObjectT = timestampMs
+      }
 
-    if (face || objectLabels) {
-      onTick({ timestampMs, face, objectLabels })
+      if (face || objectLabels) {
+        onTick({ timestampMs, face, objectLabels })
+      }
+    } catch (err) {
+      console.error('[hachiko] perception loop', err)
     }
 
     if (!stopped) video.requestVideoFrameCallback(onFrame)
