@@ -53,6 +53,8 @@ export const strings = {
       'Izin kamera ditolak. HACHIKO butuh kamera untuk memperhatikan posisi dudukmu. Muat ulang halaman dan izinkan aksesnya ya.',
     permissionError: 'Kamera belum bisa diakses. Coba periksa apakah laptop ini punya kamera yang aktif.',
     continueLabel: 'Posisi sudah pas',
+    companionSessionCount: (n: number) => `Kamu sudah ${n} sesi bareng Hachiko.`,
+    companionStreak: (days: number) => ` ${days} hari berturut-turut!`,
   },
 
   calibration: {
