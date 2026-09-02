@@ -16,3 +16,4 @@ public/fonts/*.ttf
 # Session telemetry exports if ever saved into the repo by mistake
 *.jsonl
 !fixtures/*.jsonl
+.superpowers/
