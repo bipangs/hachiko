@@ -80,6 +80,12 @@ export const strings = {
     continueLabel: 'Mulai sesi',
   },
 
+  ready: {
+    title: (minutes: number) => `Siap fokus ${minutes} menit?`,
+    body: 'Hachiko bakal nemenin dari sini. Begitu kamu tekan Mulai, sesi langsung berjalan.',
+    continueLabel: 'Mulai',
+  },
+
   session: {
     jeda: 'Jeda',
     selesai: 'Selesai',

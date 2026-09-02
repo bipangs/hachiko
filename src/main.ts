@@ -4,7 +4,9 @@ import { renderConsent } from './ui/screens/consent'
 import { renderFraming } from './ui/screens/framing'
 import { renderCalibration } from './ui/screens/calibration'
 import { renderMedia } from './ui/screens/media'
+import { renderReady } from './ui/screens/ready'
 import { runSession } from './ui/screens/session'
+import { WORK_MS } from './ui/sessionConfig'
 
 /**
  * The whole app is one linear flow, orchestrated here. Each screen
@@ -38,6 +40,7 @@ async function main(): Promise<void> {
   const { bundle, video } = await renderFraming(root)
   const { cone } = await renderCalibration(root, video, bundle)
   const { declaredMedia } = await renderMedia(root, video)
+  await renderReady(root, video, WORK_MS)
   await runSession(root, video, bundle, cone, declaredMedia)
 
   // Single-cycle build (see session.ts): a future multi-cycle version
