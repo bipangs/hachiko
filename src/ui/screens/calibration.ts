@@ -73,6 +73,7 @@ export function renderCalibration(
       s.continueLabel,
       () => {
         if (!cone) return
+        overlayLoop.stop()
         root.replaceChildren()
         resolve({ cone })
       },
@@ -176,13 +177,17 @@ export function renderCalibration(
         let predictedY = lastReading.centerY
         let predictedRadius = lastReading.radius
         if (prevReading && lastReading.at > prevReading.at) {
-          const dt = lastReading.at - prevReading.at
+          // Clamp the divisor: a very small dt (e.g. from the monotonic-
+          // timestamp bump in startFaceBoxLoop, or two genuinely close
+          // frames) would otherwise amplify normal per-frame jitter into
+          // an implausible velocity once multiplied by elapsed below.
+          const dt = Math.max(lastReading.at - prevReading.at, 8)
           const vx = (lastReading.centerX - prevReading.centerX) / dt
           const vy = (lastReading.centerY - prevReading.centerY) / dt
           const vr = (lastReading.radius - prevReading.radius) / dt
           predictedX += vx * elapsed
           predictedY += vy * elapsed
-          predictedRadius += vr * elapsed
+          predictedRadius = Math.max(1, predictedRadius + vr * elapsed)
         }
 
         if (smoothCenterX === null || smoothCenterY === null || smoothRadius === null) {
@@ -198,8 +203,9 @@ export function renderCalibration(
 
       if (smoothCenterX !== null && smoothCenterY !== null && smoothRadius !== null) {
         // Spotlight: dim everything outside the circle, leave the face
-        // itself fully visible - the rect+circle path, wound in opposite
-        // directions, punches a hole in the fill via the evenodd rule.
+        // itself fully visible - the evenodd rule fills only where a ray
+        // crosses an odd number of the two overlapping subpaths (rect,
+        // circle), so the region inside both cancels out to a hole.
         ctx.save()
         ctx.beginPath()
         ctx.rect(0, 0, canvas.width, canvas.height)
@@ -248,7 +254,6 @@ export function renderCalibration(
           cone = calibrate(frames, DEFAULT_CONFIG)
           settled = true
           dataLoop.stop()
-          overlayLoop.stop()
           status.textContent = s.done
           ring.setProgress(1, '✓')
           continueBtn.disabled = false
@@ -260,6 +265,6 @@ export function renderCalibration(
           ring.setProgress(0, '15')
         }
       }
-    }, 1000)
+    }, 1000, Number.POSITIVE_INFINITY)
   })
 }

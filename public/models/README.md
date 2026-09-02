@@ -1,6 +1,6 @@
 # Model files
 
-These are the two MediaPipe model assets the perception layer loads at
+These are the three MediaPipe model assets the perception layer loads at
 `/models/*` at runtime. They are **not checked into the repo** (they are
 large binaries) and must be downloaded once, locally, before `npm run dev`
 will produce a working camera screen. Downloading happens at build time on
@@ -23,10 +23,10 @@ curl -L -o public/models/efficientdet_lite0.tflite \
   https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite0/int8/1/efficientdet_lite0.tflite
 
 curl -L -o public/models/blaze_face_short_range.tflite \
-  https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/latest/blaze_face_short_range.tflite
+  https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.tflite
 ```
 
-Both URLs are Google's public MediaPipe model bucket (the same source
+All three URLs are Google's public MediaPipe model bucket (the same source
 referenced in PRD §4). If Google reorganizes the bucket path, check
 https://ai.google.dev/edge/mediapipe/solutions/vision/face_landmarker and
 https://ai.google.dev/edge/mediapipe/solutions/vision/object_detector for

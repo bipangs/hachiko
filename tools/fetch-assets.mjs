@@ -35,7 +35,7 @@ const ASSETS = [
   },
   {
     dest: join(root, 'public', 'models', 'blaze_face_short_range.tflite'),
-    url: 'https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/latest/blaze_face_short_range.tflite',
+    url: 'https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.tflite',
     required: true,
   },
   {
