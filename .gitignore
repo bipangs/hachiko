@@ -1,0 +1,18 @@
+.DS_Store
+
+# HACHIKO web app
+node_modules
+/dist
+*.tsbuildinfo
+
+# Large binaries fetched locally per public/*/README.md - never committed
+public/wasm/
+public/models/*.task
+public/models/*.tflite
+public/fonts/*.woff2
+public/fonts/*.woff
+public/fonts/*.ttf
+
+# Session telemetry exports if ever saved into the repo by mistake
+*.jsonl
+!fixtures/*.jsonl

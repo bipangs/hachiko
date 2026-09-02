@@ -1,0 +1,73 @@
+# HACHIKO
+
+A browser focus companion for Indonesian junior-high students. The webcam
+watches posture during a Pomodoro study block; a small digital dog sleeps
+while the student is focused and wakes when their attention drifts. No
+accounts, no server, nothing leaves the browser tab. Full spec in
+`HACHIKO_PRD.md`; repo guardrails in `CLAUDE.md`.
+
+## Setup
+
+```bash
+npm install
+
+# One-time local downloads (not committed - see each README for why):
+#   public/models/README.md  - face_landmarker.task, efficientdet_lite0.tflite
+#   public/fonts/README.md   - Plus Jakarta Sans + Inter variable woff2
+
+npm run dev       # http://localhost:5173, needs Chrome or Edge and a webcam
+```
+
+`npm run dev` and `npm run build` both copy the MediaPipe WASM runtime out
+of `node_modules` into `public/wasm/` first (`tools/copy-wasm.mjs`), so the
+app never loads it from a CDN at runtime.
+
+Until the model and font files above are downloaded, the app still starts:
+the UI falls back to system fonts, and any screen that needs the camera
+shows a plain-language message instead of a stack trace.
+
+## Commands
+
+```bash
+npm run dev        # local dev server
+npm run build      # tsc --noEmit, then vite build
+npm test           # vitest, the engine's 20 unit tests
+npm run typecheck  # tsc --noEmit only
+node tools/replay.ts <telemetry.jsonl>  # A/B/C ablation (PRD §11), e.g.:
+node tools/replay.ts fixtures/sample.jsonl --media=book --clarify=phone
+```
+
+`?debug` on the dev URL (e.g. `http://localhost:5173/?debug`) opens the
+perception-only readout used for BUILD_PROMPTS P1's week-1 gate: live
+landmark dots, numeric yaw/pitch/roll, eyeBlink, and detected objects.
+
+## Structure
+
+See `CLAUDE.md` for the full layout and hard constraints. In short:
+`src/engine/` is pure TypeScript (no browser APIs, runs under Node in
+tests); `src/perception/` wraps the camera and the two MediaPipe models;
+`src/storage/` is `localStorage` only; `src/ui/` is plain DOM, no
+framework. `tools/replay.ts` reuses the real engine to replay recorded
+telemetry under different configs, which is what makes the ablation in
+PRD §11 close to free.
+
+## Notes
+
+- **Telemetry retention.** `storage/telemetry.ts` keeps only the two most
+  recent session recordings in `localStorage` (older ones are pruned) to
+  stay well under the browser's storage quota - roughly 600KB per 25
+  minutes at 5fps. The "Unduh data sesi" button on the Session Card is
+  the only way a recording ever leaves the browser, and it's always a
+  student-initiated file download, never an automatic upload.
+- **Single-cycle session flow.** The current build runs one work block,
+  one break, an optional clarification card, and the Session Card, then
+  stops. PRD §6 describes declared media as updatable "at the next
+  break," implying chained Pomodoro cycles; that chaining isn't built
+  yet (`src/main.ts` notes where it would loop back to the media picker
+  instead of ending).
+- **Not yet verified on hardware.** The pose sign convention in
+  `src/perception/pose.ts` and the background-tab survival of
+  `requestVideoFrameCallback` in `src/perception/camera.ts` both need a
+  real laptop check per PRD §5 and BUILD_PROMPTS P1's week-1 gate. Model
+  and font files need a one-time local download - see
+  `public/models/README.md` and `public/fonts/README.md`.

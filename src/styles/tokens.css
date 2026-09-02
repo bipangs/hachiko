@@ -1,0 +1,90 @@
+/*
+ * Design tokens. Every color, spacing, radius, and easing value used
+ * anywhere in the app lives here as a custom property. Components read
+ * these tokens; they never hardcode a hex, a px gap, or a raw easing
+ * curve. See CLAUDE.md "Palette" and PRD §10 for the source values.
+ */
+
+:root {
+  /* ---- Palette (CLAUDE.md - exact values, do not adjust) ---- */
+  --cream: #fdf8f3;
+  --sand: #f5ebe0;
+  --amber: #e8934a;
+  --amber-deep: #c4692a;
+  --ink: #2b2622;
+  --ink-muted: #8a7f76;
+  --sage: #7a9471;
+  --night: #14110f;
+
+  /* Derived, still from the fixed palette above - never a new hue. */
+  --night-surface: #1d1a16; /* cards on the session view */
+  --night-border: #322c26;
+  --cream-border: #e9ddcd;
+  --focus-ring: color-mix(in srgb, var(--amber) 60%, transparent);
+
+  /* ---- Typography ---- */
+  /* Self-hosted, see public/fonts/README.md. System sans fallback keeps
+     the UI legible before the woff2 files are downloaded. */
+  --font-display: 'Plus Jakarta Sans', 'Inter', -apple-system, 'Segoe UI', sans-serif;
+  --font-body: 'Inter', 'Plus Jakarta Sans', -apple-system, 'Segoe UI', sans-serif;
+
+  --text-xs: 0.8125rem; /* 13px - helper text, labels */
+  --text-sm: 0.9375rem; /* 15px - secondary body */
+  --text-base: 1.0625rem; /* 17px - primary body, chip labels */
+  --text-lg: 1.375rem; /* 22px - card headings */
+  --text-xl: 1.875rem; /* 30px - screen titles */
+  --text-2xl: 2.5rem; /* 40px - session state label */
+  --text-timer: 4.5rem; /* 72px - the session timer, tabular numerals */
+
+  --leading-tight: 1.15;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.65;
+
+  /* ---- Spacing (4px base scale) ---- */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-20: 5rem;
+  --space-24: 6rem;
+
+  /* ---- Shape (one radius scale, applied consistently) ---- */
+  --radius-sm: 10px; /* inputs */
+  --radius-md: 16px; /* cards */
+  --radius-pill: 999px; /* chips, buttons */
+
+  /* ---- Layout ---- */
+  --content-width: 720px;
+
+  /* ---- Motion ----
+     MOTION_INTENSITY: 4 - deliberate, springy on state changes, never
+     ambient or looping attention-grabbers. Reduced-motion strips every
+     one of these down to an instant or near-instant linear step; see
+     base.css. */
+  --ease-standard: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1); /* gentle overshoot */
+  --ease-spring-soft: cubic-bezier(0.22, 1.12, 0.4, 1); /* barely-there overshoot */
+
+  --duration-fast: 150ms;
+  --duration-base: 280ms;
+  --duration-slow: 480ms;
+  --duration-breath: 4200ms; /* Hachiko's sleeping breath cycle */
+
+  /* ---- Elevation (tinted to background hue, never pure black) ---- */
+  --shadow-card: 0 1px 2px color-mix(in srgb, var(--ink) 6%, transparent),
+    0 8px 24px color-mix(in srgb, var(--ink) 8%, transparent);
+  --shadow-card-night: 0 8px 24px color-mix(in srgb, black 40%, transparent);
+  --shadow-button: 0 1px 2px color-mix(in srgb, var(--amber-deep) 20%, transparent),
+    0 6px 16px color-mix(in srgb, var(--amber-deep) 22%, transparent);
+
+  /* Ambient warmth - a hint of amber behind the mascot and at screen
+     edges, never a new hue, always mixed from the fixed palette. */
+  --glow-amber: color-mix(in srgb, var(--amber) 26%, transparent);
+  --glow-amber-soft: color-mix(in srgb, var(--amber) 10%, transparent);
+}

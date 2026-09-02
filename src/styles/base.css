@@ -1,0 +1,666 @@
+/*
+ * Reset, font loading, and every shared component class in the app.
+ * Screen-specific <style> injection is avoided entirely - everything is
+ * here, so a palette or banned-character grep only has one place to check.
+ */
+
+/* ---- Self-hosted fonts (see public/fonts/README.md) ----
+   Until the two files below are downloaded, @font-face simply fails to
+   match and the --font-display / --font-body fallback stacks in
+   tokens.css take over - the UI stays legible either way. */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  src: url('/fonts/PlusJakartaSans-Variable.woff2') format('woff2-variations');
+  font-weight: 400 800;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Inter';
+  src: url('/fonts/Inter-Variable.woff2') format('woff2-variations');
+  font-weight: 400 700;
+  font-display: swap;
+}
+
+/* ---- Reset ---- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-body);
+  color: var(--ink);
+  background: var(--cream);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+button {
+  font-family: inherit;
+  color: inherit;
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+#app {
+  min-height: 100dvh;
+}
+
+/* ---- Screen shell ----
+   Every screen except the session view sits on --cream. The session
+   view (S6) is the one deliberate exception: PRD §10 calls a bright
+   screen for 25 minutes in a bedroom "hostile," and the dark ground is
+   what makes Hachiko's waking legible in peripheral vision. */
+.screen {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background:
+    radial-gradient(ellipse 900px 500px at 50% -10%, var(--glow-amber-soft), transparent 60%),
+    var(--cream);
+  padding: var(--space-8) var(--space-4);
+}
+
+.screen--night {
+  background:
+    radial-gradient(ellipse 700px 500px at 50% 20%, color-mix(in srgb, var(--amber) 8%, transparent), transparent 65%),
+    var(--night);
+  color: var(--cream);
+}
+
+.screen__content {
+  width: 100%;
+  max-width: var(--content-width);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  animation: content-enter var(--duration-slow) var(--ease-standard);
+}
+
+@keyframes content-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.screen__title {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: 700;
+  line-height: var(--leading-tight);
+  color: var(--ink);
+  text-wrap: balance;
+}
+
+.screen--night .screen__title {
+  color: var(--cream);
+}
+
+.screen__body {
+  font-size: var(--text-base);
+  color: var(--ink-muted);
+  line-height: var(--leading-relaxed);
+  max-width: 60ch;
+  text-wrap: pretty;
+}
+
+.screen--night .screen__body {
+  color: color-mix(in srgb, var(--cream) 70%, transparent);
+}
+
+.screen__actions {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+/* ---- Buttons (one radius, one accent, checked for contrast) ---- */
+.button {
+  appearance: none;
+  border: none;
+  border-radius: var(--radius-pill);
+  padding: var(--space-3) var(--space-6);
+  font-size: var(--text-base);
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform var(--duration-fast) var(--ease-standard),
+    background-color var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard),
+    opacity var(--duration-fast) var(--ease-standard);
+  white-space: nowrap;
+}
+
+.button:active {
+  transform: scale(0.98);
+}
+
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  transform: none;
+  box-shadow: none;
+}
+
+.button--primary {
+  background: var(--amber);
+  color: var(--night); /* amber against near-black clears AA at this weight/size */
+  box-shadow: var(--shadow-button);
+}
+
+.button--primary:hover:not(:disabled) {
+  background: var(--amber-deep);
+  transform: translateY(-1px);
+}
+
+.button--primary:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.button--secondary {
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--cream-border);
+}
+
+.screen--night .button--secondary {
+  color: var(--cream);
+  border-color: var(--night-border);
+}
+
+.button--secondary:hover:not(:disabled) {
+  background: var(--sand);
+}
+
+.screen--night .button--secondary:hover:not(:disabled) {
+  background: var(--night-surface);
+}
+
+.button:focus-visible,
+.chip:focus-visible,
+input:focus-visible,
+[tabindex]:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* ---- Chips (media picker, clarification answers) ---- */
+.chip-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.chip {
+  appearance: none;
+  border: 1.5px solid var(--cream-border);
+  background: var(--cream);
+  color: var(--ink);
+  border-radius: var(--radius-pill);
+  padding: var(--space-3) var(--space-5);
+  font-size: var(--text-base);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard),
+    transform var(--duration-fast) var(--ease-standard);
+}
+
+.chip:hover {
+  border-color: var(--amber);
+}
+
+.chip:active {
+  transform: scale(0.98);
+}
+
+.chip[aria-pressed='true'] {
+  background: var(--amber);
+  border-color: var(--amber);
+  color: var(--night);
+  box-shadow: 0 3px 10px color-mix(in srgb, var(--amber-deep) 25%, transparent);
+}
+
+/* ---- Cards ---- */
+.card {
+  position: relative;
+  background: var(--sand);
+  border-radius: var(--radius-md);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  overflow: hidden;
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--amber), var(--amber-deep));
+}
+
+.screen--night .card {
+  background: var(--night-surface);
+  box-shadow: var(--shadow-card-night);
+  border: 1px solid var(--night-border);
+}
+
+.card__title {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* ---- Consent checkboxes ---- */
+.consent-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-top: 1px solid var(--cream-border);
+}
+
+.consent-item:first-of-type {
+  border-top: none;
+}
+
+.consent-item input[type='checkbox'] {
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
+  accent-color: var(--amber-deep);
+  margin-top: 2px;
+}
+
+.consent-item label {
+  font-size: var(--text-sm);
+  line-height: var(--leading-relaxed);
+  color: var(--ink);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.field label {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.field input[type='text'] {
+  font-family: inherit;
+  font-size: var(--text-base);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--cream-border);
+  background: var(--cream);
+  color: var(--ink);
+}
+
+.field input[type='text']::placeholder {
+  color: var(--ink-muted);
+}
+
+.field__error {
+  font-size: var(--text-xs);
+  color: var(--amber-deep);
+}
+
+.note {
+  font-size: var(--text-xs);
+  color: var(--ink-muted);
+  line-height: var(--leading-relaxed);
+}
+
+.screen--night .note {
+  color: color-mix(in srgb, var(--cream) 60%, transparent);
+}
+
+/* ---- Camera preview + framing ---- */
+.camera-preview {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--ink);
+}
+
+.camera-preview video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1); /* mirror, so the student sees themselves naturally */
+}
+
+.camera-preview canvas {
+  position: absolute;
+  inset: 0;
+  transform: scaleX(-1);
+  pointer-events: none;
+}
+
+/* Viewfinder corner brackets, not a dashed box - reads like a camera
+   framing guide the student already knows from a phone, not a warning
+   outline. Pure CSS gradients, no extra markup or asset. */
+.camera-preview__target {
+  --corner: 28px;
+  --bracket: 3px;
+  --bracket-color: color-mix(in srgb, var(--amber) 90%, transparent);
+  position: absolute;
+  inset: 14% 30%;
+  pointer-events: none;
+  background:
+    linear-gradient(var(--bracket-color), var(--bracket-color)) top left / var(--corner) var(--bracket) no-repeat,
+    linear-gradient(var(--bracket-color), var(--bracket-color)) top left / var(--bracket) var(--corner) no-repeat,
+    linear-gradient(var(--bracket-color), var(--bracket-color)) top right / var(--corner) var(--bracket) no-repeat,
+    linear-gradient(var(--bracket-color), var(--bracket-color)) top right / var(--bracket) var(--corner) no-repeat,
+    linear-gradient(var(--bracket-color), var(--bracket-color)) bottom left / var(--corner) var(--bracket) no-repeat,
+    linear-gradient(var(--bracket-color), var(--bracket-color)) bottom left / var(--bracket) var(--corner) no-repeat,
+    linear-gradient(var(--bracket-color), var(--bracket-color)) bottom right / var(--corner) var(--bracket) no-repeat,
+    linear-gradient(var(--bracket-color), var(--bracket-color)) bottom right / var(--bracket) var(--corner) no-repeat;
+}
+
+/* Permanently visible camera-active indicator - non-negotiable, PRD §9. */
+.camera-dot {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--ink-muted);
+}
+
+.screen--night .camera-dot {
+  color: color-mix(in srgb, var(--cream) 60%, transparent);
+}
+
+.camera-dot::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--sage);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--sage) 25%, transparent);
+  animation: dot-live 2.4s var(--ease-standard) infinite;
+}
+
+/* A real live-status signal (the camera is actually on right now), not
+   decoration - the one animated dot in the app per Section 9.F's rule
+   that decorative status dots are banned but real state is fine. */
+@keyframes dot-live {
+  0%,
+  100% {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--sage) 25%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 5px color-mix(in srgb, var(--sage) 12%, transparent);
+  }
+}
+
+/* ---- Session view ---- */
+.session {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-8);
+  text-align: center;
+  padding-top: var(--space-12);
+}
+
+.session__timer {
+  font-family: var(--font-display);
+  font-size: var(--text-timer);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  color: var(--cream);
+}
+
+.session__state {
+  font-size: var(--text-lg);
+  font-weight: 600;
+  color: color-mix(in srgb, var(--cream) 82%, transparent);
+  min-height: 1.5em;
+}
+
+.session__hachiko {
+  position: relative;
+  width: 220px;
+  height: 220px;
+}
+
+/* A quiet pool of warmth under the mascot, like a nightlight - reinforces
+   the "sleeping dog in a dark room" read from the PRD without adding any
+   text or number to the session screen. */
+.session__hachiko::before {
+  content: '';
+  position: absolute;
+  inset: -20%;
+  z-index: -1;
+  background: radial-gradient(circle, var(--glow-amber), transparent 70%);
+  border-radius: 50%;
+}
+
+.session__controls {
+  display: flex;
+  gap: var(--space-3);
+}
+
+/* Early-break / extension nudges (adaptive pacing) - a small, dismissible
+   card near Hachiko, never a modal, never forced. */
+.session__nudge {
+  width: 100%;
+  max-width: 380px;
+}
+
+/* ---- Hachiko motion ---- */
+.hachiko-sleep {
+  animation: breathe var(--duration-breath) var(--ease-spring-soft) infinite;
+  transform-origin: 50% 65%;
+}
+
+.hachiko-pose {
+  transition: transform var(--duration-slow) var(--ease-spring),
+    opacity var(--duration-base) var(--ease-standard);
+}
+
+/* Applied for one frame on insertion, then removed - see HachikoView.render.
+   Without this, swapping the SVG's innerHTML on a state change would jump
+   straight to rest with nothing to interpolate from. */
+.hachiko-pose--enter {
+  opacity: 0;
+  transform: scale(0.86);
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.025);
+  }
+}
+
+/* ---- Mascot peek (onboarding warmth) ----
+   Hachiko otherwise only appears once the session starts, so every
+   screen before it is plain text and buttons. A small, decorative,
+   already-sleeping Hachiko on the screens before the camera turns on
+   gives the mascot a presence from the first screen instead of a cold
+   open. Purely decorative - aria-hidden, no separate announcement. */
+.mascot-peek {
+  width: 96px;
+  height: 96px;
+  align-self: center;
+}
+
+/* ---- Progress ring (calibration countdown) ---- */
+.progress-ring {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  align-self: center;
+}
+
+.progress-ring svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.progress-ring circle {
+  fill: none;
+  stroke-width: 6;
+}
+
+.progress-ring__track {
+  stroke: var(--cream-border);
+}
+
+.progress-ring__fill {
+  stroke: var(--amber);
+  stroke-linecap: round;
+  transition: stroke-dashoffset var(--duration-fast) linear;
+}
+
+.progress-ring__value {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+/* ---- Session Card metrics ---- */
+.metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+}
+
+.metric {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding-left: var(--space-3);
+  border-left: 3px solid color-mix(in srgb, var(--amber) 45%, transparent);
+}
+
+.metric__label {
+  font-size: var(--text-xs);
+  color: var(--ink-muted);
+}
+
+.metric__value {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.observation {
+  font-size: var(--text-base);
+  font-style: normal;
+  color: var(--ink);
+  padding: var(--space-4);
+  background: var(--cream);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--cream-border);
+}
+
+.threshold-note {
+  font-size: var(--text-sm);
+  color: var(--amber-deep);
+}
+
+/* ---- Utility ---- */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Keyboard-only skip link. Every screen swaps in a fresh <main>, so
+   "skip to content" always lands on whichever one is currently mounted. */
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: var(--space-4);
+  z-index: 1;
+  background: var(--night);
+  color: var(--cream);
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  text-decoration: none;
+  transition: top var(--duration-fast) var(--ease-standard);
+}
+
+.skip-link:focus-visible {
+  top: var(--space-4);
+}
+
+/* ---- Reduced motion ----
+   Every animation above collapses to an instant state change. Nothing
+   here relies on JS to detect the preference; it is a pure CSS override
+   so it holds even if a screen's script does something silly. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+
+  .hachiko-sleep {
+    animation: none;
+  }
+}
