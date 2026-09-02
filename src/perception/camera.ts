@@ -1,5 +1,6 @@
-import type { FaceLandmarker, ObjectDetector } from '@mediapipe/tasks-vision'
+import type { FaceDetector, FaceLandmarker, ObjectDetector } from '@mediapipe/tasks-vision'
 import { readFace, type FaceReading } from './face'
+import { readFaceBox, type FaceBox } from './faceBox'
 import { detectObjects } from './objects'
 
 export interface CameraSession {
@@ -107,6 +108,53 @@ export function startPerceptionLoop(
       console.error('[hachiko] perception loop', err)
     }
 
+    if (!stopped) video.requestVideoFrameCallback(onFrame)
+  }
+
+  video.requestVideoFrameCallback(onFrame)
+
+  return {
+    stop: () => {
+      stopped = true
+    },
+  }
+}
+
+export interface OverlayLoopHandle {
+  stop: () => void
+}
+
+/**
+ * Simpler than startPerceptionLoop: one job (feed the live preview's
+ * overlay), no interval throttling - the whole point is running on
+ * every frame, since the model behind onBox is cheap enough to afford
+ * that (see faceBox.ts).
+ */
+export function startFaceBoxLoop(
+  video: HTMLVideoElement,
+  detector: FaceDetector,
+  onBox: (box: FaceBox | null, timestampMs: number) => void,
+): OverlayLoopHandle {
+  let stopped = false
+  let lastTimestampMs = -1
+
+  const onFrame: VideoFrameRequestCallback = () => {
+    if (stopped) return
+    let timestampMs = Math.round(performance.now())
+    // MediaPipe requires strictly increasing timestamps across calls to a
+    // shared detector; unlike startPerceptionLoop's throttle, this loop
+    // runs unthrottled on every video frame, so two frames landing in the
+    // same rounded millisecond (a compositor stall, tab visibility change)
+    // is rare but not impossible over a 15s window sampled 30-60x/sec.
+    if (timestampMs <= lastTimestampMs) timestampMs = lastTimestampMs + 1
+    lastTimestampMs = timestampMs
+    try {
+      onBox(readFaceBox(detector, video, timestampMs), timestampMs)
+    } catch (err) {
+      // Never let one bad frame kill the loop permanently - a frozen
+      // preview is worse than a dropped frame.
+      console.error('[hachiko] face box loop', err)
+    }
     if (!stopped) video.requestVideoFrameCallback(onFrame)
   }
 
