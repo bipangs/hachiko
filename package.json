@@ -6,7 +6,7 @@
   "scripts": {
     "predev": "node tools/copy-wasm.mjs",
     "dev": "vite",
-    "prebuild": "node tools/copy-wasm.mjs",
+    "prebuild": "node tools/copy-wasm.mjs && node tools/fetch-assets.mjs",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "test": "vitest run",
